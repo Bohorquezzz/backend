@@ -2,7 +2,7 @@
 Database models for UpDaily API - Conectado con MySQL
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, Text, Enum, Date, Time, Binary
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, Text, Enum, Date, Time, BINARY
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -37,7 +37,7 @@ class User(Base):
     clave = Column(String(50), nullable=True)  # Contraseña hasheada
     fecha_nacimiento = Column(Date, nullable=True)
     telefono = Column(Integer, nullable=True)
-    img_foto_usuario = Column(Binary, nullable=True)
+    img_foto_usuario = Column(BINARY, nullable=True)
     
     # Relaciones con las tablas existentes
     retos_usuario = relationship("RetoUsuario", back_populates="usuario")
@@ -75,7 +75,7 @@ class CriterioReto(Base):
     id = Column(Integer, primary_key=True, index=True)
     id_reto_usuario = Column(Integer, ForeignKey("reto_usuario.id"), nullable=True)
     id_criterio = Column(Integer, ForeignKey("criterio.id"), nullable=True)
-    completado = Column(Binary(50), nullable=True)  # 0x00 = no completado, 0x01 = completado
+    completado = Column(BINARY(50), nullable=True)  # 0x00 = no completado, 0x01 = completado
     fecha_ul_modif = Column(Date, nullable=True)  # fecha última modificación
     fecha_prim_ra = Column(Date, nullable=True)  # fecha primer registro
     

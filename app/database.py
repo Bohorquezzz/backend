@@ -1,4 +1,7 @@
 import mysql.connector
+from mysql.connector import Error
+import asyncio
+from contextlib import contextmanager
 
 def get_connection():
     return mysql.connector.connect(
@@ -8,21 +11,23 @@ def get_connection():
         database="updaily"     
     )
 
-@app.get("/")
-def read_root():
-    return {"msg": "API UpDaily funcionando"}
-
-@app.get("/usuarios")
-def get_usuarios():
+@contextmanager
+def get_db():
+    """Context manager for database connections"""
+    conn = get_connection()
     try:
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM usuarios;")
-        result = cursor.fetchall()
-        return result
-    except Error as e:
-        return {"error": str(e)}
+        yield conn
     finally:
         if conn.is_connected():
-            cursor.close()
             conn.close()
+
+async def init_db():
+    """Initialize database connection and verify it's working"""
+    try:
+        with get_db() as conn:
+            if conn.is_connected():
+                print("Database connection successful")
+                return True
+    except Error as e:
+        print(f"Error connecting to database: {e}")
+        raise e
