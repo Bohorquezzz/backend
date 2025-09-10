@@ -34,7 +34,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String(50), nullable=True)
     correo = Column(String(50), nullable=True, unique=True, index=True)
-    clave = Column(String(50), nullable=True)  # Contraseña hasheada
+    clave = Column(String(255), nullable=True)  # Contraseña hasheada (bcrypt genera hashes de ~60 caracteres)
     fecha_nacimiento = Column(Date, nullable=True)
     telefono = Column(Integer, nullable=True)
     img_foto_usuario = Column(BINARY, nullable=True)
@@ -55,17 +55,19 @@ class Reto(Base):
     # Relaciones
     retos_usuario = relationship("RetoUsuario", back_populates="reto")
     criterios_reto = relationship("CriterioReto", back_populates="reto")
+    criterios = relationship("Criterio", back_populates="reto")
 
 # Modelo basado en la tabla 'criterio' de tu base de datos
 class Criterio(Base):
     __tablename__ = "criterio"
     
     id = Column(Integer, primary_key=True, index=True)
-    id_reto = Column(Integer, nullable=True)
+    id_reto = Column(Integer, ForeignKey("reto.id"), nullable=True)
     desc_criterio = Column(String(50), nullable=True)
     tiempo_est = Column(Time, nullable=True)
     
     # Relaciones
+    reto = relationship("Reto", back_populates="criterios")
     criterios_reto = relationship("CriterioReto", back_populates="criterio")
 
 # Modelo basado en la tabla 'criterio_reto' de tu base de datos
@@ -73,6 +75,7 @@ class CriterioReto(Base):
     __tablename__ = "criterio_reto"
     
     id = Column(Integer, primary_key=True, index=True)
+    id_reto = Column(Integer, ForeignKey("reto.id"), nullable=False)
     id_reto_usuario = Column(Integer, ForeignKey("reto_usuario.id"), nullable=True)
     id_criterio = Column(Integer, ForeignKey("criterio.id"), nullable=True)
     completado = Column(BINARY(50), nullable=True)  # 0x00 = no completado, 0x01 = completado
@@ -80,6 +83,7 @@ class CriterioReto(Base):
     fecha_prim_ra = Column(Date, nullable=True)  # fecha primer registro
     
     # Relaciones
+    reto = relationship("Reto", back_populates="criterios_reto")
     reto_usuario = relationship("RetoUsuario", back_populates="criterios_reto")
     criterio = relationship("Criterio", back_populates="criterios_reto")
 
@@ -96,6 +100,7 @@ class RetoUsuario(Base):
     usuario = relationship("User", back_populates="retos_usuario")
     reto = relationship("Reto", back_populates="retos_usuario")
     criterios_reto = relationship("CriterioReto", back_populates="reto_usuario")
+    logros = relationship("Logro", back_populates="reto_usuario")
 
 # Modelo basado en la tabla 'logros' de tu base de datos
 class Logro(Base):
@@ -103,6 +108,7 @@ class Logro(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     id_reto_usuario = Column(Integer, ForeignKey("reto_usuario.id"), nullable=True)
+    id_usuario = Column(Integer, ForeignKey("usuario.id"), nullable=False)
     
     # Relaciones
     reto_usuario = relationship("RetoUsuario", back_populates="logros")
