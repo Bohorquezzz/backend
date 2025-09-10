@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./updaily.db
+      - SECRET_KEY=updaily-secret-key-2024
+      - DEBUG=True
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  # Uncomment for PostgreSQL database
+  # db:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: updaily
+  #     POSTGRES_USER: updaily
+  #     POSTGRES_PASSWORD: updaily_password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:
