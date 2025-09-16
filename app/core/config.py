@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     MYSQL_PASSWORD: str = "1234"
     MYSQL_DATABASE: str = "updaily"
     
+    # Security
+    SECRET_KEY: str = "updaily-secret-key-2024-change-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
     # CORS
     ALLOWED_ORIGINS: List[str] = ["*"]
     

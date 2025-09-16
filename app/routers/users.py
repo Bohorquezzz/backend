@@ -7,20 +7,16 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.database import get_db
+from app.core.security import verify_token
 from app.crud import user as user_crud
 from app.schemas.user import User, UserUpdate
 
 router = APIRouter()
 
-@router.get("/users", response_model=List[User])
-async def read_users(db: Session = Depends(get_db)):
-    """Get list of all users"""
-    return user_crud.get_users(db)
-
-@router.get("/users/{user_id}", response_model=User)
-async def read_user(user_id: int, db: Session = Depends(get_db)):
-    """Get user information by ID"""
-    user = user_crud.get_user(db, user_id=user_id)
+@router.get("/me", response_model=User)
+async def read_users_me(current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    """Get current user information"""
+    user = user_crud.get_user(db, user_id=int(current_user["user_id"]))
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -28,14 +24,14 @@ async def read_user(user_id: int, db: Session = Depends(get_db)):
         )
     return user
 
-@router.put("/users/{user_id}", response_model=User)
-async def update_user(
-    user_id: int,
+@router.put("/me", response_model=User)
+async def update_user_me(
     user_update: UserUpdate,
+    current_user: dict = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-    """Update user information"""
-    user = user_crud.update_user(db, user_id=user_id, user_update=user_update)
+    """Update current user information"""
+    user = user_crud.update_user(db, user_id=int(current_user["user_id"]), user_update=user_update)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -43,10 +39,13 @@ async def update_user(
         )
     return user
 
-@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: int, db: Session = Depends(get_db)):
-    """Delete user account"""
-    success = user_crud.delete_user(db, user_id=user_id)
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user_me(
+    current_user: dict = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Delete current user account"""
+    success = user_crud.delete_user(db, user_id=int(current_user["user_id"]))
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
