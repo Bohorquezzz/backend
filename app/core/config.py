@@ -20,8 +20,24 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # CORS
-    ALLOWED_ORIGINS: List[str] = ["*"]
+    # CORS Configuration
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:8080",      # Kotlin local development
+        "http://127.0.0.1:8080",      # Alternative localhost
+        "http://10.0.2.2:8080",       # Android Emulator
+        "http://localhost:3000",      # Para desarrollo web
+        "capacitor://localhost",      # Para aplicaciones Capacitor
+        "http://192.168.1.*",        # IPs locales
+        "*"                          # Desarrollo (remover en producción)
+    ]
+    ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    ALLOW_HEADERS: List[str] = [
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "X-Requested-With"
+    ]
     
     # App settings
     APP_NAME: str = "UpDaily API"
