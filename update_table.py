@@ -7,10 +7,47 @@ def update_table():
         
         # Crear conexión
         with engine.connect() as connection:
-            # Modificar la columna
-            connection.execute(text("ALTER TABLE usuario MODIFY COLUMN clave VARCHAR(255);"))
+            # Añadir columnas necesarias para el sistema de retos
+            # Add categoria column
+            try:
+                connection.execute(text("""
+                    ALTER TABLE reto 
+                    ADD COLUMN categoria ENUM('SOCIAL', 'FISICA', 'INTELECTUAL') 
+                    NOT NULL DEFAULT 'SOCIAL'
+                """))
+                print("Added categoria column")
+            except Exception as e:
+                if "Duplicate column name" not in str(e):
+                    raise e
+                print("categoria column already exists")
+
+            # Add fecha_asignacion column
+            try:
+                connection.execute(text("""
+                    ALTER TABLE reto 
+                    ADD COLUMN fecha_asignacion DATE 
+                    DEFAULT (CURRENT_DATE)
+                """))
+                print("Added fecha_asignacion column")
+            except Exception as e:
+                if "Duplicate column name" not in str(e):
+                    raise e
+                print("fecha_asignacion column already exists")
+
+            # Add activo column
+            try:
+                connection.execute(text("""
+                    ALTER TABLE reto 
+                    ADD COLUMN activo BOOLEAN 
+                    DEFAULT TRUE
+                """))
+                print("Added activo column")
+            except Exception as e:
+                if "Duplicate column name" not in str(e):
+                    raise e
+                print("activo column already exists")
             connection.commit()
-            print("Columna modificada exitosamente")
+            print("Columnas añadidas exitosamente")
 
     except Exception as error:
         print(f"Error: {error}")
