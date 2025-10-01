@@ -27,6 +27,11 @@ class ChallengeStatus(enum.Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+class RetoCategoria(enum.Enum):
+    SOCIAL = "SOCIAL"
+    FISICA = "FISICA"
+    INTELECTUAL = "INTELECTUAL"
+
 # Modelo basado en la tabla 'usuario' de tu base de datos
 class User(Base):
     __tablename__ = "usuario"
@@ -51,6 +56,7 @@ class Reto(Base):
     nombre_reto = Column(String(50), nullable=True)
     descripcion_reto = Column(String(50), nullable=True)
     tipo = Column(Integer, nullable=True)  # 1=simple, 2=progreso, 3=checklist
+    categoria = Column(Enum(RetoCategoria), nullable=False)
     
     # Relaciones
     retos_usuario = relationship("RetoUsuario", back_populates="reto")
