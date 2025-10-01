@@ -4,13 +4,21 @@ Progress tracking endpoints
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import date
 
 from app.database import get_db
 from app.core.security import verify_token
 from app.crud import progress as progress_crud
 from app.schemas.progress import ProgressRecord, ProgressRecordCreate, ProgressRecordUpdate, ProgressStats
+from app.services import progress_service
+from app.schemas.reto import RetoUsuario
+from pydantic import BaseModel
+
+class ChallengeStats(BaseModel):
+    total_completed: int
+    by_category: Dict[str, int]
+    completion_rate: float
 
 router = APIRouter()
 
@@ -40,6 +48,31 @@ async def get_progress_stats(
 ):
     """Get user progress statistics"""
     return progress_crud.get_user_stats(db, user_id=int(current_user["user_id"]))
+
+@router.get("/challenges/stats", response_model=ChallengeStats)
+async def get_challenge_stats(
+    current_user: dict = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Get user's challenge completion statistics"""
+    return progress_service.get_user_challenge_stats(db, current_user["id"])
+
+@router.post("/challenges/{reto_id}/complete", response_model=RetoUsuario)
+async def complete_challenge(
+    reto_id: int,
+    current_user: dict = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Mark a challenge as complete"""
+    return progress_service.mark_challenge_complete(db, current_user["id"], reto_id)
+
+@router.get("/challenges/active")
+async def get_active_challenges(
+    current_user: dict = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Get user's currently active challenges with progress"""
+    return progress_service.get_user_active_challenges(db, current_user["id"])
 
 @router.get("/habit/{habit_id}", response_model=List[ProgressRecord])
 async def get_habit_progress(
