@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from app.database import init_db
-from app.routers import auth, users, habits, challenges, progress, retos, criterios, logros
+from app.routers import auth, users, habits, challenges, progress, retos, criterios, logros, daily_retos
 from app.core.config import settings
 
 # Security scheme
@@ -48,6 +48,7 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(habits.router, prefix="/api/v1/habits", tags=["Habits"])
 app.include_router(challenges.router, prefix="/api/v1/challenges", tags=["Challenges"])
+app.include_router(daily_retos.router, prefix="/api/v1/daily-retos", tags=["Daily Challenges"])
 app.include_router(progress.router, prefix="/api/v1/progress", tags=["Progress"])
 app.include_router(retos.router, prefix="/api/v1/retos", tags=["Retos"])
 app.include_router(criterios.router, prefix="/api/v1/criterios", tags=["Criterios"])

@@ -57,6 +57,8 @@ class Reto(Base):
     descripcion_reto = Column(String(50), nullable=True)
     tipo = Column(Integer, nullable=True)  # 1=simple, 2=progreso, 3=checklist
     categoria = Column(Enum(RetoCategoria), nullable=False)
+    fecha_asignacion = Column(Date, default=datetime.utcnow().date)
+    activo = Column(Boolean, default=True)
     
     # Relaciones
     retos_usuario = relationship("RetoUsuario", back_populates="reto")
