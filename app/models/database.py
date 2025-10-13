@@ -174,3 +174,34 @@ class ProgressRecord(Base):
     # Relaciones
     user = relationship("User", foreign_keys=[user_id])
     habit = relationship("Habit", back_populates="progress_records")
+
+# Modelo para retos diarios automáticos
+class DailyChallenge(Base):
+    __tablename__ = "daily_challenges"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("usuario.id"), nullable=False)
+    reto_id = Column(Integer, ForeignKey("reto.id"), nullable=False)
+    challenge_date = Column(Date, nullable=False, index=True)
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    progress_value = Column(Float, default=0.0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relaciones
+    user = relationship("User", foreign_keys=[user_id])
+    reto = relationship("Reto", foreign_keys=[reto_id])
+
+# Modelo para plantillas de retos diarios
+class DailyChallengeTemplate(Base):
+    __tablename__ = "daily_challenge_templates"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String(100), nullable=False)
+    descripcion = Column(Text, nullable=True)
+    tipo = Column(Integer, nullable=False)  # 1=simple, 2=progreso, 3=checklist
+    categoria = Column(String(50), nullable=True)  # fisicos, intelectuales, sociales
+    dificultad = Column(Integer, default=1)  # 1=fácil, 2=medio, 3=difícil
+    puntos_recompensa = Column(Integer, default=10)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

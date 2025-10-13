@@ -10,8 +10,9 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from app.database import init_db
-from app.routers import auth, users, habits, challenges, progress, retos, criterios, logros
+from app.routers import auth, users, habits, challenges, progress, retos, criterios, logros, daily_challenges
 from app.core.config import settings
+from app.services.scheduler import daily_challenge_scheduler
 
 # Security scheme
 security = HTTPBearer()
@@ -20,9 +21,11 @@ security = HTTPBearer()
 async def lifespan(app: FastAPI):
     # Startup
     await init_db()
+    # Start the daily challenge scheduler
+    daily_challenge_scheduler.start()
     yield
     # Shutdown
-    pass
+    daily_challenge_scheduler.shutdown()
 
 # Create FastAPI app
 app = FastAPI(
@@ -50,6 +53,7 @@ app.include_router(progress.router, prefix="/api/v1/progress", tags=["Progress"]
 app.include_router(retos.router, prefix="/api/v1/retos", tags=["Retos"])
 app.include_router(criterios.router, prefix="/api/v1/criterios", tags=["Criterios"])
 app.include_router(logros.router, prefix="/api/v1/logros", tags=["Logros"])
+app.include_router(daily_challenges.router, prefix="/api/v1/daily-challenges", tags=["Daily Challenges"])
 
 @app.get("/")
 async def root():
