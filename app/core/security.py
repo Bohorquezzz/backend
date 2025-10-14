@@ -53,3 +53,8 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         return {"user_id": user_id}
     except JWTError:
         raise credentials_exception
+        if user_id is None:
+            raise credentials_exception
+        return {"user_id": user_id}
+    except JWTError:
+        raise credentials_exception

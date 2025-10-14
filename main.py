@@ -10,7 +10,11 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from app.database import init_db
+<<<<<<< HEAD
 from app.routers import auth, users, habits, challenges, progress, retos, criterios, logros, daily_challenges
+=======
+from app.routers import auth, users, habits, challenges, progress, retos, criterios, logros, daily_retos, category_stats
+>>>>>>> 86920293ddf295b9cdf516a78c0fb301e383b5c6
 from app.core.config import settings
 from app.services.scheduler import daily_challenge_scheduler
 
@@ -35,13 +39,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=settings.ALLOW_METHODS,
+    allow_headers=settings.ALLOW_HEADERS,
+    expose_headers=["*"],
+    max_age=600,  # Cache preflight requests for 10 minutes
 )
 
 # Include routers
@@ -49,6 +55,8 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(habits.router, prefix="/api/v1/habits", tags=["Habits"])
 app.include_router(challenges.router, prefix="/api/v1/challenges", tags=["Challenges"])
+app.include_router(category_stats.router, prefix="/api/v1/stats/category", tags=["Category Statistics"])
+app.include_router(daily_retos.router, prefix="/api/v1/daily-retos", tags=["Daily Challenges"])
 app.include_router(progress.router, prefix="/api/v1/progress", tags=["Progress"])
 app.include_router(retos.router, prefix="/api/v1/retos", tags=["Retos"])
 app.include_router(criterios.router, prefix="/api/v1/criterios", tags=["Criterios"])

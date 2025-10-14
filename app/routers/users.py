@@ -50,4 +50,7 @@ async def delete_user_me(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
+        )(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
         )

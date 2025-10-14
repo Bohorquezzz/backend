@@ -4,11 +4,13 @@ Pydantic schemas for Reto model - Conectado con MySQL
 
 from pydantic import BaseModel
 from typing import Optional
+from app.models.database import RetoCategoria
 
 class RetoBase(BaseModel):
     nombre_reto: Optional[str] = None
     descripcion_reto: Optional[str] = None
     tipo: Optional[int] = None  # 1=simple, 2=progreso, 3=checklist
+    categoria: RetoCategoria
 
 class RetoCreate(RetoBase):
     pass
@@ -17,6 +19,7 @@ class RetoUpdate(BaseModel):
     nombre_reto: Optional[str] = None
     descripcion_reto: Optional[str] = None
     tipo: Optional[int] = None
+    categoria: Optional[RetoCategoria] = None
 
 class RetoInDB(RetoBase):
     id: int
