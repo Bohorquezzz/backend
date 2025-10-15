@@ -10,11 +10,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from app.database import init_db
-<<<<<<< HEAD
-from app.routers import auth, users, habits, challenges, progress, retos, criterios, logros, daily_challenges
-=======
-from app.routers import auth, users, habits, challenges, progress, retos, criterios, logros, daily_retos, category_stats
->>>>>>> 86920293ddf295b9cdf516a78c0fb301e383b5c6
+from app.routers import auth, users, habits, challenges, progress, retos, criterios, logros, daily_challenges, category_stats
 from app.core.config import settings
 from app.services.scheduler import daily_challenge_scheduler
 
@@ -56,12 +52,11 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(habits.router, prefix="/api/v1/habits", tags=["Habits"])
 app.include_router(challenges.router, prefix="/api/v1/challenges", tags=["Challenges"])
 app.include_router(category_stats.router, prefix="/api/v1/stats/category", tags=["Category Statistics"])
-app.include_router(daily_retos.router, prefix="/api/v1/daily-retos", tags=["Daily Challenges"])
+app.include_router(daily_challenges.router, prefix="/api/v1/daily-challenges", tags=["Daily Challenges"])
 app.include_router(progress.router, prefix="/api/v1/progress", tags=["Progress"])
 app.include_router(retos.router, prefix="/api/v1/retos", tags=["Retos"])
 app.include_router(criterios.router, prefix="/api/v1/criterios", tags=["Criterios"])
 app.include_router(logros.router, prefix="/api/v1/logros", tags=["Logros"])
-app.include_router(daily_challenges.router, prefix="/api/v1/daily-challenges", tags=["Daily Challenges"])
 
 @app.get("/")
 async def root():

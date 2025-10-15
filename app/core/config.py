@@ -8,7 +8,7 @@ import os
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "mysql+pymysql://root:password@localhost:3306/UpDaily"
+    DATABASE_URL: str = "mysql+pymysql://root:1234@localhost:3306/updaily"
     MYSQL_HOST: str = "localhost"
     MYSQL_PORT: int = 3306
     MYSQL_USER: str = "root"
