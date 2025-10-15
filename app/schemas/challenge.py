@@ -40,7 +40,7 @@ class ChallengeInDB(ChallengeBase):
     id: int
     user_id: int
     status: ChallengeStatus
-    current_value: float
+    current_value: float = 0.0
     completed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

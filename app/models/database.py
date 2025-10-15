@@ -153,7 +153,7 @@ class Challenge(Base):
     challenge_type = Column(Enum(ChallengeType), default=ChallengeType.SIMPLE)
     status = Column(Enum(ChallengeStatus), default=ChallengeStatus.PENDING)
     target_value = Column(Float)
-    current_value = Column(Float, default=0.0)
+    current_value = Column(Float, default=0.0, nullable=False)
     unit = Column(String(50))
     icon = Column(String(100))
     color = Column(String(50))
