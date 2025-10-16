@@ -5,7 +5,7 @@ Progress tracking endpoints
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict
-from datetime import date
+from datetime import date, datetime
 
 from app.database import get_db
 from app.core.security import verify_token
@@ -13,6 +13,8 @@ from app.crud import progress as progress_crud
 from app.schemas.progress import ProgressRecord, ProgressRecordCreate, ProgressRecordUpdate, ProgressStats
 from app.services import progress_service
 from app.schemas.reto import RetoUsuario
+from app.schemas.challenge_progress import ChallengeProgressUpdate
+from app.models.database import DailyChallenge
 from pydantic import BaseModel
 
 class ChallengeStats(BaseModel):
@@ -93,6 +95,64 @@ async def get_challenge_progress(
 ):
     """Get progress records for a specific challenge"""
     return progress_crud.get_challenge_progress(db, challenge_id=challenge_id, user_id=int(current_user["user_id"]))
+
+@router.post("/challenge/{challenge_id}")
+async def update_challenge_progress(
+    challenge_id: int,
+    progress: ChallengeProgressUpdate,
+    current_user: dict = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Update progress value for a daily challenge using the daily_challenges table id"""
+    try:
+        # Buscar directamente por el id de daily_challenges
+        daily_challenge = db.query(DailyChallenge).filter(
+            DailyChallenge.id == challenge_id,
+            DailyChallenge.user_id == int(current_user["user_id"])
+        ).first()
+        
+        if not daily_challenge:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró el reto diario con ID {challenge_id}"
+            )
+
+        # Si el reto ya está completado, no permitir modificaciones
+        if daily_challenge.is_completed:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se puede modificar un reto que ya está completado"
+            )
+        
+        # Actualizar el progreso (el valor ya está validado entre 0 y 100)
+        daily_challenge.progress_value = progress.value
+        
+        # Si se marca explícitamente como completado o el progreso es 100%
+        if progress.is_completed or progress.value >= 100.0:
+            daily_challenge.is_completed = True
+            daily_challenge.completed_at = datetime.utcnow()
+        
+        db.commit()
+        db.refresh(daily_challenge)
+        
+        return {
+            "id": daily_challenge.id,
+            "reto_id": daily_challenge.reto_id,
+            "progress_value": daily_challenge.progress_value,
+            "is_completed": daily_challenge.is_completed,
+            "completed_at": daily_challenge.completed_at,
+            "challenge_date": daily_challenge.challenge_date,
+            "message": f"Progreso actualizado correctamente a {progress.value}%"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al actualizar el progreso: {str(e)}"
+        )
 
 @router.get("/{record_id}", response_model=ProgressRecord)
 async def get_progress_record(
