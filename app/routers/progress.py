@@ -43,13 +43,149 @@ async def create_progress_record(
     """Create a new progress record"""
     return progress_crud.create_progress_record(db=db, progress=progress, user_id=int(current_user["user_id"]))
 
-@router.get("/stats", response_model=ProgressStats)
+@router.get("/stats", response_model=ProgressStats, responses={
+    200: {"description": "Estadísticas obtenidas exitosamente"},
+    404: {"description": "No se encontraron datos para el usuario"},
+    500: {"description": "Error interno del servidor"}
+})
 async def get_progress_stats(
     current_user: dict = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
     """Get user progress statistics"""
-    return progress_crud.get_user_stats(db, user_id=int(current_user["user_id"]))
+    try:
+        user_id = int(current_user["user_id"])
+        today = date.today()
+        
+        # Verificar si el usuario existe y tiene retos
+        user_exists = db.query(DailyChallenge).filter(
+            DailyChallenge.user_id == user_id
+        ).first()
+        
+        if not user_exists:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontraron retos para este usuario"
+            )
+        
+        try:
+            # Total retos del usuario
+            total_challenges = db.query(DailyChallenge).filter(
+                DailyChallenge.user_id == user_id
+            ).count()
+            
+            # Retos completados totales
+            completed_challenges = db.query(DailyChallenge).filter(
+                DailyChallenge.user_id == user_id,
+                DailyChallenge.is_completed == True
+            ).count()
+            
+            # Tasa de completación (retos completados / retos totales * 100)
+            total_habits = total_challenges
+            completion_percentage = (completed_challenges / total_challenges * 100) if total_challenges > 0 else 0.0
+            
+            # Retos completados hoy
+            completed_today = db.query(DailyChallenge).filter(
+                DailyChallenge.user_id == user_id,
+                DailyChallenge.is_completed == True,
+                DailyChallenge.completed_at >= today
+            ).count()
+            
+            # Obtener todos los retos completados ordenados por fecha
+            completed_challenges_list = db.query(DailyChallenge).filter(
+                DailyChallenge.user_id == user_id,
+                DailyChallenge.is_completed == True
+            ).order_by(DailyChallenge.completed_at).all()
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al consultar la base de datos: {str(e)}"
+            )
+            
+        try:
+            # Calcular current_streak y longest_streak
+            current_streak = 0
+            longest_streak = 0
+            temp_streak = 0
+            last_date = None
+            
+            for challenge in completed_challenges_list:
+                if not challenge.completed_at:
+                    continue
+                    
+                current_date = challenge.completed_at.date()
+                
+                if last_date is None:
+                    temp_streak = 1
+                elif (current_date - last_date).days == 1:
+                    temp_streak += 1
+                elif (current_date - last_date).days > 1:
+                    if temp_streak > longest_streak:
+                        longest_streak = temp_streak
+                    temp_streak = 1
+                    
+                last_date = current_date
+            
+            # Actualizar longest_streak una última vez
+            if temp_streak > longest_streak:
+                longest_streak = temp_streak
+            
+            # Si el último reto completado fue ayer o hoy, mantener la racha actual
+            if last_date and (today - last_date).days <= 1:
+                current_streak = temp_streak
+            else:
+                current_streak = 0
+                
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al calcular las rachas: {str(e)}"
+            )
+            
+        try:
+            # Calcular tiempo promedio de completación (en horas)
+            total_time = 0
+            completed_count = 0
+            
+            for challenge in completed_challenges_list:
+                if challenge.completed_at and challenge.created_at:
+                    if challenge.completed_at < challenge.created_at:
+                        raise ValueError("Fecha de completado anterior a fecha de creación")
+                    time_diff = challenge.completed_at - challenge.created_at
+                    total_time += time_diff.total_seconds() / 3600  # convertir a horas
+                    completed_count += 1
+            
+            completion_rate = total_time / completed_count if completed_count > 0 else 0.0
+            
+        except ValueError as ve:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error en la integridad de los datos: {str(ve)}"
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al calcular el tiempo promedio: {str(e)}"
+            )
+        
+        return {
+            "total_habits": total_habits,
+            "completed_today": completed_today,
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "completion_rate": round(completion_rate, 2),  # Redondear a 2 decimales
+            "total_challenges": total_challenges,
+            "completed_challenges": completed_challenges
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error inesperado: {str(e)}"
+        )
 
 @router.get("/challenges/stats", response_model=ChallengeStats)
 async def get_challenge_stats(
