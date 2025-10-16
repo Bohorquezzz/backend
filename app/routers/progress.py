@@ -14,7 +14,9 @@ from app.schemas.progress import ProgressRecord, ProgressRecordCreate, ProgressR
 from app.services import progress_service
 from app.schemas.reto import RetoUsuario
 from app.schemas.challenge_progress import ChallengeProgressUpdate
-from app.models.database import DailyChallenge
+from app.models.database import DailyChallenge, RetoCategoria
+from app.schemas.daily_progress import DailyProgressStats
+from sqlalchemy import func
 from pydantic import BaseModel
 
 class ChallengeStats(BaseModel):
@@ -42,6 +44,78 @@ async def create_progress_record(
 ):
     """Create a new progress record"""
     return progress_crud.create_progress_record(db=db, progress=progress, user_id=int(current_user["user_id"]))
+
+@router.get("/daily-progress", response_model=DailyProgressStats, responses={
+    200: {"description": "Estadísticas diarias obtenidas exitosamente"},
+    404: {"description": "No se encontraron retos para el día actual"},
+    500: {"description": "Error interno del servidor"}
+})
+async def get_daily_progress(
+    current_user: dict = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Get daily progress statistics and completion by category"""
+    try:
+        user_id = int(current_user["user_id"])
+        today = date.today()
+
+        # Obtener retos del día actual
+        daily_challenges = db.query(DailyChallenge).join(
+            DailyChallenge.reto
+        ).filter(
+            DailyChallenge.user_id == user_id,
+            DailyChallenge.challenge_date == today,
+            DailyChallenge.created_at >= today
+        ).all()
+
+        if not daily_challenges:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontraron retos asignados para el día actual"
+            )
+
+        # Contar total de retos y completados
+        total_challenges = len(daily_challenges)
+        completed_challenges = sum(1 for c in daily_challenges if c.is_completed)
+
+        # Calcular porcentaje de completación
+        daily_completion_percentage = (completed_challenges / total_challenges * 100) if total_challenges > 0 else 0.0
+
+        # Inicializar contador por categoría con valores en minúscula
+        completion_by_category = {
+            "social": 0,
+            "fisico": 0,
+            "intelectual": 0
+        }
+
+        # Contar retos completados por categoría
+        for challenge in daily_challenges:
+            if challenge.is_completed and challenge.reto and challenge.reto.categoria:
+                categoria = challenge.reto.categoria.value.upper()
+                if categoria == "SOCIAL":
+                    completion_by_category["social"] += 1
+                elif categoria == "FISICA":
+                    completion_by_category["fisico"] += 1
+                elif categoria == "INTELECTUAL":
+                    completion_by_category["intelectual"] += 1
+
+        # Mantener todas las categorías en la respuesta, incluso con valor 0
+
+        return {
+            "daily_completion_percentage": round(daily_completion_percentage, 2),
+            "total_daily_challenges": total_challenges,
+            "completed_daily_challenges": completed_challenges,
+            "completion_by_category": completion_by_category,
+            "remaining_challenges": total_challenges - completed_challenges
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener estadísticas diarias: {str(e)}"
+        )
 
 @router.get("/stats", response_model=ProgressStats, responses={
     200: {"description": "Estadísticas obtenidas exitosamente"},
