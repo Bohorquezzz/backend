@@ -25,15 +25,18 @@ def get_password_hash(password: str) -> str:
     """Hash a password"""
     return pwd_context.hash(password)
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Create a JWT access token"""
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None, is_refresh_token: bool = False):
+    """Create a JWT token (access or refresh)"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        if is_refresh_token:
+            expire = datetime.utcnow() + timedelta(days=30)  # Refresh token válido por 30 días
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "refresh": is_refresh_token})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
