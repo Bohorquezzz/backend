@@ -1,0 +1,2 @@
+ALTER TABLE reto MODIFY COLUMN nombre_reto TEXT;
+ALTER TABLE reto MODIFY COLUMN descripcion_reto TEXT;
