@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict
 from datetime import date, datetime
+from sqlalchemy import func, and_
+import random
 
 from app.database import get_db
 from app.core.security import verify_token
@@ -408,3 +410,5 @@ async def delete_progress_record(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Progress record not found"
         )
+
+
