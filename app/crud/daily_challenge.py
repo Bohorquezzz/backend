@@ -36,7 +36,13 @@ def get_user_daily_challenges(
 def get_today_challenges(db: Session, user_id: int) -> List[DailyChallenge]:
     """Get today's challenges for a user"""
     today = date.today()
-    return get_user_daily_challenges(db, user_id, today)
+    today_start = datetime.combine(today, datetime.min.time())
+    today_end = datetime.combine(today, datetime.max.time())
+    
+    return (db.query(DailyChallenge)
+            .filter(DailyChallenge.user_id == user_id)
+            .filter(DailyChallenge.created_at.between(today_start, today_end))
+            .all())
 
 def create_daily_challenge(db: Session, challenge: DailyChallengeCreate) -> DailyChallenge:
     """Create new daily challenge"""
